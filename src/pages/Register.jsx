@@ -16,34 +16,35 @@ const Register = () => {
   });
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("clicked");
+  e.preventDefault();
+  console.log("clicked");
 
-    try {
-      const payload = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        password: data.password,
-      };
+  try {
+    console.log("before register");
 
-      // Register
-      await registerApi(payload);
+    const payload = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      password: data.password,
+    };
 
-      // Auto login
-      await login({
-        email: data.email,
-        password: data.password,
-      });
+    const res1 = await registerApi(payload);
 
-      toast.success("Registered & Logged in 🎉");
+    console.log("after register", res1);
 
-      navigate("/");
-    } catch (err) {
-      console.log(err.response?.data);
-      toast.error(err.response?.data?.message || "Registration failed");
-    }
-  };
+    const res2 = await login({
+      email: data.email,
+      password: data.password,
+    });
+
+    console.log("after login", res2);
+
+    navigate("/");
+  } catch (err) {
+    console.log("ERROR:", err);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
