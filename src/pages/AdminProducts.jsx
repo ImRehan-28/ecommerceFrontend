@@ -147,7 +147,7 @@ const AdminProducts = () => {
       {/* Add / Edit Dialog */}
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle>{editingId ? "Edit Product" : "Add Product"}</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "20px !important" }}>
           {["name", "category", "image"].map((f) => (
             <TextField
               key={f}

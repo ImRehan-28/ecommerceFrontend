@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCart, removeItem, placeOrder } from "./cartService";
+import { useCart } from "./cartContext";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,6 +15,8 @@ const CartPage = () => {
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+
+  const { refreshCart } = useCart();
 
   const loadCart = async () => {
     try {
@@ -32,6 +35,7 @@ const CartPage = () => {
     await removeItem(id);
     enqueueSnackbar("Removed from cart", { variant: "info" });
     loadCart();
+    refreshCart();
   };
 
   const handlePlaceOrder = async () => {
@@ -44,6 +48,7 @@ const CartPage = () => {
       await placeOrder();
       enqueueSnackbar("Order placed successfully!", { variant: "success" });
       loadCart();
+      refreshCart();
     } catch {
       enqueueSnackbar("Failed to place order", { variant: "error" });
     }

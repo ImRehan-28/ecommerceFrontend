@@ -5,6 +5,7 @@ import ProductCard from "../../components/productCard";
 import { useSnackbar } from "notistack";
 import { useLocation } from "react-router-dom";
 import { Grid, Box, Pagination, CircularProgress, Typography } from "@mui/material";
+import { useCart } from "../cart/cartContext";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
@@ -31,10 +32,13 @@ const ProductList = () => {
       .finally(() => setLoading(false));
   }, [search, page]);
 
+  const { refreshCart } = useCart();
+
   const handleAdd = async (id) => {
     try {
       await addToCart(id);
       enqueueSnackbar("Added to cart", { variant: "success" });
+      refreshCart();
     } catch {
       enqueueSnackbar("Login to add to cart", { variant: "warning" });
     }

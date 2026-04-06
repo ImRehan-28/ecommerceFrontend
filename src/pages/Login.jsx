@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useSnackbar } from "notistack";
+import { useCart } from "../feature/cart/cartContext";
 import {
   Box, Paper, Typography, TextField, Button, CircularProgress,
 } from "@mui/material";
 
 const Login = () => {
   const { login } = useAuth();
+  const { refreshCart } = useCart();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [data, setData] = useState({ email: "", password: "" });
@@ -19,6 +21,7 @@ const Login = () => {
     try {
       const res = await login(data);
       enqueueSnackbar("Login successful", { variant: "success" });
+      await refreshCart();
       navigate(res.role === "ROLE_ADMIN" ? "/admin/products" : "/");
     } catch {
       enqueueSnackbar("Invalid email or password", { variant: "error" });

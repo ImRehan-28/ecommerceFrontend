@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getProductById, getProducts } from "../feature/products/productService";
 import { addToCart } from "../feature/cart/cartService";
+import { useCart } from "../feature/cart/cartContext";
 import { useSnackbar } from "notistack";
 import {
   Box, Grid, Typography, Button, Chip, Divider,
@@ -13,6 +14,7 @@ const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { refreshCart } = useCart();
   const [product, setProduct] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
 
@@ -21,7 +23,7 @@ const ProductDetails = () => {
       .then((res) => setProduct(res.data))
       .catch(() => enqueueSnackbar("Failed to load product", { variant: "error" }));
 
-    getProducts().then((res) => {
+    getProducts("", 0, 10).then((res) => {
       const all = res.data.content || [];
       setSuggestions(all.filter((p) => p.id !== Number(id)).slice(0, 10));
     });
@@ -31,6 +33,7 @@ const ProductDetails = () => {
     try {
       await addToCart(product.id);
       enqueueSnackbar("Added to cart", { variant: "success" });
+      refreshCart();
     } catch {
       enqueueSnackbar("Login to add to cart", { variant: "warning" });
     }
@@ -59,7 +62,9 @@ const ProductDetails = () => {
         {/* Details */}
         <Grid item xs={12} md={7}>
           <Typography variant="h4" fontWeight="bold">{product.name}</Typography>
-          <Chip label={product.category} size="small" sx={{ mt: 1 }} />
+          {product.category && (
+            <Chip label={product.category} size="small" sx={{ mt: 1 }} />
+          )}
           <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
             {product.description}
           </Typography>
