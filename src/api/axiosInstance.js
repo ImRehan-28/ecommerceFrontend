@@ -3,7 +3,7 @@ import { getToken, removeToken } from "../utils/token";
 const API = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
-  baseURL: `http://localhost:8080`, // ✅ ADD /api here
+  baseURL: `{API}`, // ✅ ADD /api here
 });
 
 api.interceptors.request.use((config) => {
