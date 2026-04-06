@@ -1,89 +1,109 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getProductById } from "../feature/products/productService";
+import { getProductById, getProducts } from "../feature/products/productService";
 import { addToCart } from "../feature/cart/cartService";
-import { toast } from "react-toastify";
-import { useCart } from "../feature/cart/cartContext";
-import { getProducts } from "../feature/products/productService";
+import { useSnackbar } from "notistack";
+import {
+  Box, Grid, Typography, Button, Chip, Divider,
+  Card, CardMedia, CardContent, CircularProgress,
+} from "@mui/material";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
   const [product, setProduct] = useState(null);
-  const { addToCart } = useCart();
   const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
     getProductById(id)
       .then((res) => setProduct(res.data))
-      .catch(() => toast.error("Failed to load product"));
-  }, [id]);
+      .catch(() => enqueueSnackbar("Failed to load product", { variant: "error" }));
 
-  useEffect(() => {
     getProducts().then((res) => {
-      const allProducts = res.data.content || [];
-
-      // remove current product
-      const filtered = allProducts.filter((p) => p.id !== Number(id));
-
-      // take 10 products
-      setSuggestions(filtered.slice(0, 10));
+      const all = res.data.content || [];
+      setSuggestions(all.filter((p) => p.id !== Number(id)).slice(0, 10));
     });
   }, [id]);
 
-  if (!product) return <p className="p-6">Loading...</p>;
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(product.id);
+      enqueueSnackbar("Added to cart", { variant: "success" });
+    } catch {
+      enqueueSnackbar("Login to add to cart", { variant: "warning" });
+    }
+  };
+
+  if (!product)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
+        <CircularProgress />
+      </Box>
+    );
 
   return (
-    <div className="max-w-6xl mx-auto p-6 grid md:grid-cols-2 gap-8">
-      {/* Image */}
-      <div>
-        <img src={product.image} />
-      </div>
+    <Box sx={{ maxWidth: 1100, mx: "auto", p: 3 }}>
+      <Grid container spacing={4}>
+        {/* Image */}
+        <Grid item xs={12} md={5}>
+          <Box
+            component="img"
+            src={product.image}
+            alt={product.name}
+            sx={{ width: "100%", borderRadius: 2, objectFit: "cover", maxHeight: 400 }}
+          />
+        </Grid>
 
-      {/* Details */}
-      <div>
-        <h1 className="text-3xl font-bold">{product.name}</h1>
+        {/* Details */}
+        <Grid item xs={12} md={7}>
+          <Typography variant="h4" fontWeight="bold">{product.name}</Typography>
+          <Chip label={product.category} size="small" sx={{ mt: 1 }} />
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+            {product.description}
+          </Typography>
+          <Typography variant="h4" color="success.main" fontWeight="bold" sx={{ mt: 3 }}>
+            ₹{product.price}
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<ShoppingCartIcon />}
+            sx={{ mt: 3 }}
+            onClick={handleAddToCart}
+          >
+            Add to Cart
+          </Button>
+        </Grid>
+      </Grid>
 
-        <p className="text-gray-600 mt-2">{product.description}</p>
-
-        <p className="text-green-600 text-2xl font-bold mt-4">
-          ₹{product.price}
-        </p>
-
-        <button
-          onClick={async () => {
-             addToCart(product);
-            toast.success("Added to cart");
-          }}
-          className="bg-blue-600 text-white px-6 py-3 mt-6 rounded-lg hover:bg-blue-700 transition"
-        >
-          Add to Cart
-        </button>
-        <p>description: {product.description}</p>
-        <p>category: {product.category}</p>
-      </div>
-      <div className="max-w-6xl mx-auto px-6 mt-10">
-        <h2 className="text-xl font-bold mb-4">You may also like</h2>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-          {suggestions.map((item) => (
-            <div
-              key={item.id}
-              className="border rounded-lg p-3 hover:shadow-lg transition cursor-pointer"
-              onClick={() => (window.location.href = `/product/${item.id}`)}
-            >
-              <img
-                src={item.image}
-                className="w-full h-32 object-cover rounded"
-              />
-
-              <p className="text-sm font-medium mt-2">{item.name}</p>
-
-              <p className="text-green-600 font-bold text-sm">₹{item.price}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+      {/* Suggestions */}
+      {suggestions.length > 0 && (
+        <Box sx={{ mt: 6 }}>
+          <Divider sx={{ mb: 3 }} />
+          <Typography variant="h6" fontWeight="bold" mb={2}>
+            You may also like
+          </Typography>
+          <Grid container spacing={2}>
+            {suggestions.map((item) => (
+              <Grid item xs={6} sm={4} md={2.4} key={item.id}>
+                <Card
+                  sx={{ cursor: "pointer", "&:hover": { boxShadow: 4 } }}
+                  onClick={() => navigate(`/product/${item.id}`)}
+                >
+                  <CardMedia component="img" height="120" image={item.image} alt={item.name} sx={{ objectFit: "cover" }} />
+                  <CardContent sx={{ p: 1.5 }}>
+                    <Typography variant="body2" fontWeight="medium" noWrap>{item.name}</Typography>
+                    <Typography variant="body2" color="success.main" fontWeight="bold">₹{item.price}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+    </Box>
   );
 };
 

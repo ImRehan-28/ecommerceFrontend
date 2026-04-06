@@ -1,119 +1,117 @@
-import { Link } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  AppBar, Toolbar, Typography, IconButton, Badge, InputBase,
+  Box, Avatar, Menu, MenuItem, Divider, Button,
+} from "@mui/material";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import SearchIcon from "@mui/icons-material/Search";
+import { useAuth } from "../auth/AuthContext";
 import { useCart } from "../feature/cart/cartContext";
 
 const Navbar = () => {
   const { logout, role, user, isAuthenticated } = useAuth();
-
-  const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
-  const displayName = user?.split("@")[0];
   const { cart } = useCart();
-  console.log({ isAuthenticated, role, user });
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const displayName = user?.split("@")[0] ?? "U";
+
   const handleSearch = () => {
-    navigate(`/?search=${search}`);
+    if (search.trim()) navigate(`/?search=${search}`);
   };
 
   const handleLogout = () => {
-    logout(); // remove token
-    navigate("/login"); // redirect
+    setAnchorEl(null);
+    logout();
+    navigate("/login");
   };
 
   return (
-    <nav className="flex items-center justify-between px-6 py-3 bg-gray-900 text-white shadow-md">
-      {/* Logo */}
-      <h1 className="text-2xl font-bold tracking-wide cursor-pointer">ShopX</h1>
-
-      <div>
-        <Link to="/" className="hover:text-gray-300 transition">
-          Home
-        </Link>
-      </div>
-
-      {/* Search Bar */}
-      <div className="flex items-center w-1/3 bg-white rounded-lg overflow-hidden">
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          className="w-full px-3 py-2 text-black outline-none"
-        />
-        <button
-          onClick={handleSearch}
-          className="bg-blue-600 px-4 py-2 hover:bg-blue-700 transition"
+    <AppBar position="sticky">
+      <Toolbar sx={{ gap: 2 }}>
+        <Typography
+          variant="h6"
+          fontWeight="bold"
+          sx={{ cursor: "pointer", mr: 2 }}
+          onClick={() => navigate("/")}
         >
-          🔍
-        </button>
-      </div>
+          ShopX
+        </Typography>
 
-      {/* Navigation Links */}
-      <div className="flex items-center gap-6 text-sm font-medium">
-        {isAuthenticated && (
-          <Link to="/cart" className="hover:text-gray-300 transition">
-            🛒 Cart
-          </Link>
+        {/* Search */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            bgcolor: "rgba(255,255,255,0.15)",
+            borderRadius: 1,
+            px: 1,
+            flexGrow: 1,
+            maxWidth: 400,
+          }}
+        >
+          <InputBase
+            placeholder="Search products…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            sx={{ color: "inherit", flex: 1 }}
+          />
+          <IconButton size="small" color="inherit" onClick={handleSearch}>
+            <SearchIcon />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ flexGrow: 1 }} />
+
+        {/* Admin link */}
+        {role === "ROLE_ADMIN" && (
+          <Button color="inherit" component={Link} to="/admin/products">
+            Admin
+          </Button>
         )}
 
-        {role === "ROLE_ADMIN" && <Link to="/admin/products">Admin</Link>}
-      </div>
+        {/* Cart */}
+        {isAuthenticated && (
+          <IconButton color="inherit" component={Link} to="/cart">
+            <Badge badgeContent={cart.length} color="error">
+              <ShoppingCartIcon />
+            </Badge>
+          </IconButton>
+        )}
 
-      {/* Logout */}
-      {isAuthenticated ? (
-        <div className="relative">
-          {/* Avatar + Name */}
-          <div
-            onClick={() => setOpen(!open)}
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            {/* Avatar */}
-            <div className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-600 text-white font-bold uppercase">
-              {displayName ? displayName.charAt(0) : "U"}
-            </div>
-
-            {/* Name */}
-          </div>
-
-          {/* Dropdown */}
-          {open && (
-            <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg z-50">
-              <p className="px-4 py-2 border-b font-medium">{displayName}</p>
-
-              {/* Cart inside dropdown */}
-              <Link
-                to="/cart"
-                className="relative hover:text-gray-300 transition"
-              >
-                🛒 Cart
-                {cart.length > 0 && (
-                  <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                    {cart.length}
-                  </span>
-                )}
-              </Link>
-
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-2 hover:bg-gray-100"
-              >
-                Logout
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <Link
-          to="/login"
-          className="bg-green-500 px-3 py-2 rounded-lg hover:bg-green-600 transition"
-        >
-          Login
-        </Link>
-      )}
-    </nav>
+        {/* Auth */}
+        {isAuthenticated ? (
+          <>
+            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small">
+              <Avatar sx={{ width: 34, height: 34, bgcolor: "secondary.main", fontSize: 14 }}>
+                {displayName.charAt(0).toUpperCase()}
+              </Avatar>
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={() => setAnchorEl(null)}
+            >
+              <MenuItem disabled>
+                <Typography variant="body2">{displayName}</Typography>
+              </MenuItem>
+              <Divider />
+              <MenuItem component={Link} to="/cart" onClick={() => setAnchorEl(null)}>
+                My Cart
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>Logout</MenuItem>
+            </Menu>
+          </>
+        ) : (
+          <Button color="inherit" variant="outlined" component={Link} to="/login">
+            Login
+          </Button>
+        )}
+      </Toolbar>
+    </AppBar>
   );
 };
 

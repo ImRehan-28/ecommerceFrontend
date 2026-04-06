@@ -1,83 +1,124 @@
 import { useEffect, useState } from "react";
 import { getCart, removeItem, placeOrder } from "./cartService";
-import { toast } from "react-toastify";
+import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
+import {
+  Box, Typography, Paper, List, ListItem, ListItemText,
+  ListItemAvatar, Avatar, IconButton, Divider, Button, CircularProgress,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
+
 const CartPage = () => {
   const [cart, setCart] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
   const loadCart = async () => {
-    console.log("LOAD CART CALLED"); // 👈 add this
-    const res = await getCart();
-    setCart(res.data);
+    try {
+      const res = await getCart();
+      setCart(res.data);
+    } catch {
+      enqueueSnackbar("Failed to load cart", { variant: "error" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      await loadCart();
-    };
-    fetchData();
-  }, []);
+  useEffect(() => { loadCart(); }, []);
+
+  const handleRemove = async (id) => {
+    await removeItem(id);
+    enqueueSnackbar("Removed from cart", { variant: "info" });
+    loadCart();
+  };
+
+  const handlePlaceOrder = async () => {
+    if (cart.length === 0) {
+      enqueueSnackbar("Cart is empty", { variant: "warning" });
+      navigate("/");
+      return;
+    }
+    try {
+      await placeOrder();
+      enqueueSnackbar("Order placed successfully!", { variant: "success" });
+      loadCart();
+    } catch {
+      enqueueSnackbar("Failed to place order", { variant: "error" });
+    }
+  };
+
+  const total = cart.reduce((sum, item) => sum + item.product.price * (item.quantity ?? 1), 0);
+
+  if (loading)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
+        <CircularProgress />
+      </Box>
+    );
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
+    <Box sx={{ maxWidth: 700, mx: "auto", p: 3 }}>
+      <Typography variant="h5" fontWeight="bold" mb={2}>
+        Your Cart
+      </Typography>
 
-      {/* Cart Items */}
-      <div className="space-y-4">
-        {cart.map((item) => (
-          <div
-            key={item.id}
-            className="flex justify-between items-center bg-white p-4 rounded-xl shadow"
-          >
-            <div>
-              <h2 className="font-semibold text-lg">{item.product.name}</h2>
-              <p className="text-gray-500">₹{item.product.price}</p>
-            </div>
+      {cart.length === 0 ? (
+        <Paper sx={{ p: 4, textAlign: "center", borderRadius: 3 }}>
+          <Typography color="text.secondary">Your cart is empty 🛒</Typography>
+          <Button variant="contained" sx={{ mt: 2 }} onClick={() => navigate("/")}>
+            Shop Now
+          </Button>
+        </Paper>
+      ) : (
+        <>
+          <Paper elevation={2} sx={{ borderRadius: 3, overflow: "hidden" }}>
+            <List disablePadding>
+              {cart.map((item, idx) => (
+                <Box key={item.id}>
+                  <ListItem
+                    secondaryAction={
+                      <IconButton edge="end" color="error" onClick={() => handleRemove(item.id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    }
+                  >
+                    <ListItemAvatar>
+                      <Avatar src={item.product.image} variant="rounded" sx={{ width: 52, height: 52, mr: 1 }} />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={item.product.name}
+                      secondary={`₹${item.product.price} × ${item.quantity ?? 1}`}
+                    />
+                    <Typography fontWeight="bold" sx={{ mr: 4 }}>
+                      ₹{item.product.price * (item.quantity ?? 1)}
+                    </Typography>
+                  </ListItem>
+                  {idx < cart.length - 1 && <Divider />}
+                </Box>
+              ))}
+            </List>
+          </Paper>
 
-            <button
-              onClick={async () => {
-                await removeItem(item.id);
-                toast.success("Removed from cart");
-                loadCart();
-              }}
-              className="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition"
+          {/* Summary */}
+          <Paper elevation={2} sx={{ mt: 2, p: 2, borderRadius: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Typography variant="h6" fontWeight="bold">
+              Total: ₹{total.toFixed(2)}
+            </Typography>
+            <Button
+              variant="contained"
+              color="success"
+              size="large"
+              startIcon={<ShoppingCartCheckoutIcon />}
+              onClick={handlePlaceOrder}
             >
-              Remove
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Total Section */}
-      <div className="mt-6 bg-white p-4 rounded-xl shadow flex justify-between items-center">
-        <p className="text-lg font-semibold">
-          Total: ₹{cart.reduce((sum, item) => sum + item.product.price, 0)}
-        </p>
-
-        <button
-          onClick={async () => {
-            if (cart.length === 0) {
-              toast.info("Select Product.");
-              navigate("/"); // 👉 go to homepage
-              return;
-            }
-
-            await placeOrder();
-            toast.success("Order placed");
-            loadCart();
-          }}
-          className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
-        >
-          Place Order
-        </button>
-      </div>
-
-      {/* Empty State */}
-      {cart.length === 0 && (
-        <p className="text-center text-gray-500 mt-6">Your cart is empty 🛒</p>
+              Place Order
+            </Button>
+          </Paper>
+        </>
       )}
-    </div>
+    </Box>
   );
 };
 

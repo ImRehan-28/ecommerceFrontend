@@ -1,37 +1,79 @@
 import { useEffect, useState } from "react";
 import { getProducts } from "./productService";
-import ProductCard from "../../components/productCard";
 import { addToCart } from "../cart/cartService";
-import { toast } from "react-toastify";
+import ProductCard from "../../components/productCard";
+import { useSnackbar } from "notistack";
 import { useLocation } from "react-router-dom";
+import { Grid, Box, Pagination, CircularProgress, Typography } from "@mui/material";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
 
   const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const search = query.get("search");
+  const search = new URLSearchParams(location.search).get("search") ?? "";
 
   useEffect(() => {
-    getProducts(search).then((res) => {
-      console.log(res.data);
-      setProducts(res.data.content); // ✅ correct
-    });
+    setPage(1);
   }, [search]);
 
+  useEffect(() => {
+    setLoading(true);
+    getProducts(search, page - 1)
+      .then((res) => {
+        setProducts(res.data.content ?? []);
+        setTotalPages(res.data.totalPages ?? 1);
+      })
+      .catch(() => enqueueSnackbar("Failed to load products", { variant: "error" }))
+      .finally(() => setLoading(false));
+  }, [search, page]);
+
   const handleAdd = async (id) => {
-    await addToCart(id);
-    toast.success("Added to cart");
+    try {
+      await addToCart(id);
+      enqueueSnackbar("Added to cart", { variant: "success" });
+    } catch {
+      enqueueSnackbar("Login to add to cart", { variant: "warning" });
+    }
   };
 
+  if (loading)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+
   return (
-    <div className="max-w-7xl mx-auto px-4 mt-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} onAdd={handleAdd} />
-        ))}
-      </div>
-    </div>
+    <Box sx={{ maxWidth: 1200, mx: "auto", px: 2, py: 3 }}>
+      {products.length === 0 ? (
+        <Typography textAlign="center" color="text.secondary" mt={6}>
+          No products found.
+        </Typography>
+      ) : (
+        <Grid container spacing={3}>
+          {products.map((p) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={p.id}>
+              <ProductCard product={p} onAdd={handleAdd} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, val) => setPage(val)}
+            color="primary"
+          />
+        </Box>
+      )}
+    </Box>
   );
 };
 

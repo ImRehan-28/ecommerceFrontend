@@ -1,10 +1,16 @@
-const DashboardCard = ({ title, value }) => {
-  return (
-    <div className="bg-white p-6 rounded-2xl shadow">
-      <h2 className="text-gray-500">{title}</h2>
-      <p className="text-2xl font-bold mt-2">{value}</p>
-    </div>
-  );
-};
+import { Card, CardContent, Typography } from "@mui/material";
+
+const DashboardCard = ({ title, value }) => (
+  <Card elevation={3} sx={{ borderRadius: 3 }}>
+    <CardContent>
+      <Typography variant="body2" color="text.secondary">
+        {title}
+      </Typography>
+      <Typography variant="h4" fontWeight="bold" sx={{ mt: 1 }}>
+        {value}
+      </Typography>
+    </CardContent>
+  </Card>
+);
 
 export default DashboardCard;

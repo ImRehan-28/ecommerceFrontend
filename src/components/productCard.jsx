@@ -1,50 +1,57 @@
 import { useNavigate } from "react-router-dom";
+import {
+  Card, CardMedia, CardContent, CardActions,
+  Typography, Button,
+} from "@mui/material";
 
 const ProductCard = ({ product, onAdd }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white rounded-2xl shadow hover:shadow-xl transition duration-300 overflow-hidden group">
-      {/* Image */}
-      <div
-        className="overflow-hidden cursor-pointer"
+    <Card
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        transition: "box-shadow 0.3s",
+        "&:hover": { boxShadow: 6 },
+      }}
+    >
+      <CardMedia
+        component="img"
+        height="180"
+        image={product.image}
+        alt={product.name}
+        sx={{ cursor: "pointer", objectFit: "cover" }}
         onClick={() => navigate(`/product/${product.id}`)}
-      >
-        <img
-          src={product.image}
-          className="w-full h-48 object-fit group-hover:scale-105 transition duration-300"
-        />
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        {/* Title */}
-        <h2
+      />
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Typography
+          variant="subtitle1"
+          fontWeight="bold"
+          noWrap
+          sx={{ cursor: "pointer", "&:hover": { color: "primary.main" } }}
           onClick={() => navigate(`/product/${product.id}`)}
-          className="font-semibold text-lg line-clamp-1 cursor-pointer hover:text-blue-600"
         >
           {product.name}
-        </h2>
-
-        {/* Description */}
-        <p className="text-gray-500 text-sm line-clamp-2 mt-1">
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
           {product.description}
-        </p>
-
-        {/* Price + Rating */}
-        <div className="flex justify-between items-center mt-3">
-          <p className="text-green-600 font-bold text-xl">₹{product.price}</p>
-        </div>
-
-        {/* Button */}
-        <button
+        </Typography>
+        <Typography variant="h6" color="success.main" fontWeight="bold" sx={{ mt: 1 }}>
+          ₹{product.price}
+        </Typography>
+      </CardContent>
+      <CardActions sx={{ px: 2, pb: 2 }}>
+        <Button
+          variant="contained"
+          fullWidth
           onClick={() => onAdd(product.id)}
-          className="w-full bg-blue-600 text-white py-2 mt-4 rounded-lg hover:bg-blue-700 active:scale-95 transition"
         >
           Add to Cart
-        </button>
-      </div>
-    </div>
+        </Button>
+      </CardActions>
+    </Card>
   );
 };
 

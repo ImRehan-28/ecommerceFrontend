@@ -1,32 +1,28 @@
+import { Box, Grid } from "@mui/material";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import AdminNavbar from "../components/admin/AdminNavbar";
 import DashboardCard from "../components/admin/Dashboardcard";
 
-const AdminDashboard = () => {
-  return (
-    <div className="flex h-screen bg-gray-100">
-      
-      {/* Sidebar */}
-      <AdminSidebar />
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        
-        {/* Navbar */}
-        <AdminNavbar />
-
-        {/* Dashboard Content */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          <DashboardCard title="Total Products" value="120" />
-          <DashboardCard title="Total Users" value="45" />
-          <DashboardCard title="Orders" value="78" />
-
-        </div>
-
-      </div>
-    </div>
-  );
-};
+const AdminDashboard = () => (
+  <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "grey.100" }}>
+    <AdminSidebar />
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <AdminNavbar />
+      <Box sx={{ p: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={4}>
+            <DashboardCard title="Total Products" value="120" />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <DashboardCard title="Total Users" value="45" />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <DashboardCard title="Orders" value="78" />
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
+  </Box>
+);
 
 export default AdminDashboard;

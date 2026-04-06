@@ -1,85 +1,65 @@
 import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
-import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useSnackbar } from "notistack";
+import {
+  Box, Paper, Typography, TextField, Button, CircularProgress,
+} from "@mui/material";
 
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  const [data, setData] = useState({
-    email: "",
-    password: "",
-  });
+  const { enqueueSnackbar } = useSnackbar();
+  const [data, setData] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  try {
-    const res = await login(data);   // 👈 get response
-
-    toast.success("Login success");
-
-    // 🔥 ROLE CHECK
-    if (res.role === "ROLE_ADMIN") {
-      navigate("/admin/products");   // ✅ admin page
-    } else {
-      navigate("/");                 // normal user
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await login(data);
+      enqueueSnackbar("Login successful", { variant: "success" });
+      navigate(res.role === "ROLE_ADMIN" ? "/admin/products" : "/");
+    } catch {
+      enqueueSnackbar("Invalid email or password", { variant: "error" });
+    } finally {
+      setLoading(false);
     }
-
-  } catch {
-    toast.error("Login failed");
-  }
-};
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md"
-      >
-        {/* Title */}
-        <h2 className="text-2xl font-bold text-center mb-6">Welcome Back 👋</h2>
-
-        {/* Email */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input
+    <Box sx={{ minHeight: "90vh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "grey.100" }}>
+      <Paper elevation={4} sx={{ p: 4, width: "100%", maxWidth: 420, borderRadius: 3 }}>
+        <Typography variant="h5" fontWeight="bold" textAlign="center" mb={3}>
+          Welcome Back 👋
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <TextField
+            label="Email"
             type="email"
-            placeholder="Enter your email"
+            required
+            fullWidth
             value={data.email}
             onChange={(e) => setData({ ...data, email: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        </div>
-
-        {/* Password */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-1">Password</label>
-          <input
+          <TextField
+            label="Password"
             type="password"
-            placeholder="Enter your password"
+            required
+            fullWidth
             value={data.password}
             onChange={(e) => setData({ ...data, password: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        </div>
-
-        {/* Button */}
-        <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
-          Login
-        </button>
-
-        {/* Extra */}
-        <p className="text-sm text-center mt-4 text-gray-500">
-          Don’t have an account?{" "}
-          <Link to="/Register" className="text-blue-600 hover:underline">
-            Register
-          </Link>
-        </p>
-      </form>
-    </div>
+          <Button type="submit" variant="contained" size="large" disabled={loading}>
+            {loading ? <CircularProgress size={22} color="inherit" /> : "Login"}
+          </Button>
+        </Box>
+        <Typography variant="body2" textAlign="center" mt={2} color="text.secondary">
+          Don't have an account?{" "}
+          <Link to="/register" style={{ color: "#1976d2" }}>Register</Link>
+        </Typography>
+      </Paper>
+    </Box>
   );
 };
 
